@@ -1,19 +1,17 @@
 # Creating the Pokemon Class
-import os
-os.chdir('C:\\Users\\Brand\\OneDrive\\文档\\GitHub\\Pokemon-Simulator-in-Python')
-
 class Pokemon(object):
     POKEMON_DICTIONARY = {}
     NATURE_DICTIONARY={}
     LEVEL = 50
-    def __init__(self,pokemon,gender,iv=[31,31,31,31,31,31],ability=None,item=None,nature='timid',ev=[100,100,100,100,100,10],moves=['a','b','c','d'],dynamax_level=10,friendship=255):
+    STAB=1.5
+    def __init__(self,pokemon,gender,iv=[31,31,31,31,31,31],ability=None,item=None,nature='timid',ev=[100,100,100,100,100,10],moves=None,dynamax_level=10,friendship=255):
         # User defined pokemon
         '''
         Pokemon initiate value:
 
         pokemon: pokemon defined by the game;
 
-        moves: list of 4 strings; e.g. ['sand attack','take-down','hyperbeam','dragon claw']
+        moves: list of 4 Move objects; e.g. [sand_attack,take_down,hyper_beam,dragon_claw]
 
         iv: list of 6 int; e.g. [31,31,31,31,31,31], represents individual value for hp, physical attack, physical defense, special attack, special defense, speed
             each value is a int between 0 and 31
@@ -33,7 +31,7 @@ class Pokemon(object):
         '''
         pokemonInfo = []
         if len(Pokemon.POKEMON_DICTIONARY) == 0:
-            fin = open("Kanto Pokemon Spreadsheet.csv", 'r')
+            fin = open("galar_pokedex.csv", 'r')
             for line in fin:
                 line = line.strip()
                 pokeList = line.split(",")
@@ -50,39 +48,38 @@ class Pokemon(object):
         # Referring to the pokemonInfo list to fill in the rest of the attributes
         # ID Info
 
-
         self.__id = pokemonInfo[0]
         self.name = pokemonInfo[1]
         self.level = Pokemon.LEVEL
-        self.gender=gender
+        self.gender=gender.lower()
 
         # Type 系
-        self.type1 = pokemonInfo[2]
-        self.type2 = pokemonInfo[3]
+        self.__type1 = pokemonInfo[2]
+        self.__type2 = pokemonInfo[3]
 
         # Move 技能
-        self.move1=moves[0]
-        self.move2=moves[1]
-        self.move3=moves[2]
-        self.move4=moves[3]
+        self.__move1=moves[0]
+        self.__move2=moves[1]
+        self.__move3=moves[2]
+        self.__move4=moves[3]
 
         # iv 个体值
-        self.iv=iv
-        self.iv_hp=self.iv[0]
-        self.iv_attack=self.iv[1]
-        self.iv_defense=self.iv[2]
-        self.iv_special_attack=self.iv[3]
-        self.iv_special_defense=self.iv[4]
-        self.iv_speed=self.iv[5]
+        self.__iv=iv
+        self.__iv_hp=self.__iv[0]
+        self.__iv_attack=self.__iv[1]
+        self.__iv_defense=self.__iv[2]
+        self.__iv_special_attack=self.__iv[3]
+        self.__iv_special_defense=self.__iv[4]
+        self.__iv_speed=self.__iv[5]
 
         # ev 努力值
-        self.ev=ev
-        self.ev_hp=self.ev[0]
-        self.ev_attack=self.ev[1]
-        self.ev_defense=self.ev[2]
-        self.ev_special_attack=self.ev[3]
-        self.ev_special_defense=self.ev[4]
-        self.ev_speed=self.ev[5]
+        self.__ev=ev
+        self.__ev_hp=self.__ev[0]
+        self.__ev_attack=self.__ev[1]
+        self.__ev_defense=self.__ev[2]
+        self.__ev_special_attack=self.__ev[3]
+        self.__ev_special_defense=self.__ev[4]
+        self.__ev_speed=self.__ev[5]
 
 
         # BASE STATS 种族值
@@ -94,27 +91,29 @@ class Pokemon(object):
         self.__speed = int(pokemonInfo[9])
 
         #nature 性格
-        self.nature=nature
         if len(Pokemon.NATURE_DICTIONARY) == 0:
             fin = open("nature.csv", 'r')
             for line in fin:
                 line = line.strip()
                 nature_line = line.split(",")
                 Pokemon.NATURE_DICTIONARY[nature_line[0]] = nature_line
-
             fin.close()
 
-        # Creating an info list for user-selected pokemon nature
-        for key in Pokemon.NATURE_DICTIONARY:
-            if key.lower() == nature.lower():
-                nature_modifer= Pokemon.NATURE_DICTIONARY[key]
+        if nature.lower() in Pokemon.NATURE_DICTIONARY:
+            self.__nature=nature
+            nature_modifer= Pokemon.NATURE_DICTIONARY[nature.lower()]
+            self.__hp_modifer=float(nature_modifer[1])
+            self.__attack_modifer=float(nature_modifer[2])
+            self.__defense_modifer=float(nature_modifer[3])
+            self.__special_attack_modifer=float(nature_modifer[4])
+            self.__special_defense_modifer=float(nature_modifer[5])
+            self.__speed_modifer=float(nature_modifer[6])
+            self.__accuracy=0
+            self.__evasion=0
+        else:
+            raise ValueError("This nature does not exists")
 
-        self.__hp_modifer=float(nature_modifer[1])
-        self.__attack_modifer=float(nature_modifer[2])
-        self.__defense_modifer=float(nature_modifer[3])
-        self.__special_attack_modifer=float(nature_modifer[4])
-        self.__special_defense_modifer=float(nature_modifer[5])
-        self.__speed_modifer=float(nature_modifer[6])
+        # Creating an info list for user-selected pokemon nature
 
         #ability 特性
         self.ability=ability
@@ -125,35 +124,183 @@ class Pokemon(object):
         # In Battle Stats
         # Stat = ((Base * 2 + IV + (EV/4)) * Level / 100 + 5) * Nmod
         #HP = (Base * 2 + IV + (EV/4)) * Level / 100 + 10 + Level
-
+        originalHP = round((self.__hp*2+self.__iv_hp+(self.__ev_hp/4))*self.level/100+10+self.level)*self.__hp_modifer
+        originalATK = round(((self.__attack*2+self.__iv_attack+(self.__ev_attack/4))*self.level/100+5)*self.__attack_modifer)
+        originalDEF = round(((self.__defense*2+self.__iv_defense+(self.__ev_defense/4))*self.level/100+5)*self.__defense_modifer)
+        originalSpATK = round(((self.__special_attack*2+self.__iv_special_attack+(self.__ev_special_attack/4))*self.level/100+5)*self.__special_attack_modifer)
+        originalSpDEF = round(((self.__special_defense*2+self.__iv_special_defense+(self.__ev_special_defense/4))*self.level/100+5)*self.__special_defense_modifer)
+        originalSpeed = round(((self.__speed*2+self.__iv_speed+(self.__ev_speed/4))*self.level/100+5)*self.__speed_modifer)
+        self.__initial_stats=[originalHP,originalATK,originalDEF,originalSpATK,originalSpDEF,originalSpeed]
         # These variables are used to just hold the values of the original stat for stat modification purposes
-
-        # A list containing all the moves; used for error-checking later
-        self.moveList = [self.move1.lower(), self.move2.lower(), self.move3.lower(), self.move4.lower()]
 
         # In Battle Stats
         # Raised or lowered based on different moves used in battle. Affects the in battle stats (more info in the Overview of Battle Mechanics in readme.txt)
-        self.accuracy=1
-        self.evasion=0
+
         self.atkStage = 0
         self.defStage = 0
         self.spAtkStage = 0
         self.spDefStage = 0
         self.speedStage = 0
+        self.acccuracy_level=self.__accuracy+self.__evasion
+        self.__buff=[self.atkStage,self.defStage,self.spAtkStage,self.spDefStage,self.speedStage,self.accuracy_level]
+
+        #dynamax 超极巨化
+        self.__is_dynamax=False
+        self.__dynamax_level=dynamax_level
+
+        if max(self.__iv)>31 or min(self.__iv)<0:
+            raise ValueError('iv needs to be an int between 0 and 31!')
+
+        if max(self.__ev)>252 or min(self.__ev)<0:
+            raise ValueError('ev needs to be an int bettwen 0 and 252')
+
+        if sum(self.__ev)>510:
+            raise ValueError('sum of evs need be to 510 or less!')
+
+        self.__battle_stats=self.__initial_stats.append(self.accuracy_level)
+
+        self.__battle_hp=int(originalHP)
+        self.__is_faint=0
+    # Property
+
 
     #read only property in battle stats: 六围面板数据
     @property
-    def get_initial_stats(self):
-        originalHP = round((self.__hp*2+self.iv_hp+(self.ev_hp/4))*self.level/100+10+self.level)*self.__hp_modifer
-        originalATK = round(((self.__attack*2+self.iv_attack+(self.ev_attack/4))*self.level/100+5)*self.__attack_modifer)
-        originalDEF = round(((self.__defense*2+self.iv_defense+(self.ev_defense/4))*self.level/100+5)*self.__defense_modifer)
-        originalSpATK = round(((self.__special_attack*2+self.iv_special_attack+(self.ev_special_attack/4))*self.level/100+5)*self.__special_attack_modifer)
-        originalSpDEF = round(((self.__special_defense*2+self.iv_special_defense+(self.ev_special_defense/4))*self.level/100+5)*self.__special_defense_modifer)
-        originalSpeed = round(((self.__speed*2+self.iv_speed+(self.ev_speed/4))*self.level/100+5)*self.__speed_modifer)
-        self.initial_stats=[originalHP,originalATK,originalDEF,originalSpATK,originalSpDEF,originalSpeed]
-        return self.initial_stats
-    # METHODS
-    # Printing all the Pokemon info with the str method
+    def initial_stats(self):
+        return self.__initial_stats
+
+    @initial_stats.setter
+    def initial_stats(self,stats:list):
+        if len(stats) !=6:
+            raise ValueError('iv needs to be a list of six int')
+        else:
+            originalHP = round((self.__hp*2+self.__iv_hp+(self.__ev_hp/4))*self.level/100+10+self.level)*self.__hp_modifer
+            originalATK = round(((self.__attack*2+self.__iv_attack+(self.__ev_attack/4))*self.level/100+5)*self.__attack_modifer)
+            originalDEF = round(((self.__defense*2+self.__iv_defense+(self.__ev_defense/4))*self.level/100+5)*self.__defense_modifer)
+            originalSpATK = round(((self.__special_attack*2+self.__iv_special_attack+(self.__ev_special_attack/4))*self.level/100+5)*self.__special_attack_modifer)
+            originalSpDEF = round(((self.__special_defense*2+self.__iv_special_defense+(self.__ev_special_defense/4))*self.level/100+5)*self.__special_defense_modifer)
+            originalSpeed = round(((self.__speed*2+self.__iv_speed+(self.__ev_speed/4))*self.level/100+5)*self.__speed_modifer)
+            self.__initial_stats=[int(originalHP),originalATK,originalDEF,originalSpATK,originalSpDEF,originalSpeed]
+
+
+    @property
+    def buff(self):
+        return self.__buff
+
+    @buff.setter
+    def buff(self,stats_change:list):
+        def buff_multiplier(i):
+            if i>=0:
+                return (min(i,6)+2)/2
+            else:
+                return 2/(min(i,6)+2)
+
+        def accuracy_multiplier(i:int,j:int):
+            if i+j>=0:
+                return (min(i+j,6)+3)/3
+            else:
+                retrun 3/(min(i+j,6)+3)
+
+        if len(stats_change) !=7:
+           ValueError("Need to be a list of 7 int representing\n attack,defense,special attack,special defense,speed,accuracy,evasion")
+
+        else:
+           self.__buff=sum(zip(stats_change,self.__buff))
+           HP,ATK,DEF,SpATK,SpDEF,Speed,Accuracy,Evasion=self.__battle_stats
+           ATK*=buff_multiplier(stats_change[0])
+           DEF*=buff_multiplier(stats_change[1])
+           SpATK*=buff_multiplier(stats_change[2])
+           SpDEF*=buff_multiplier(stats_change[3])
+           Speed*=buff_multiplier(stats_change[4])
+           Accuracy_level=accuracy_multiplier(astats_change[5],stats_change[6])
+           self.__battle_stats=[ATK,DEF,SpATK,SpDEF,Accuracy_level]
+           self.atkStage +=stats_change[0]
+           self.defStage += stats_change[1]
+           self.spAtkStage += stats_change[2]
+           self.spDefStage += stats_change[3]
+           self.speedStage += stats_change[4]
+           self.acccuracy_level+=stats_change[5]
+
+
+
+
+    @property
+    def battle_stats(self):
+        return self.__battles_stats
+
+
+
+    @property
+    def type(self):
+        return [self.__type1,self.__type2]
+
+    @type.setter
+    def type(self,type):
+        self.__type1=type[0]
+        self.__type2=type[1]
+
+    #nature
+    @property
+    def nature(self):
+        return self.__nature
+
+    @nature.setter
+    def nature(self,nature):
+        if  nature.lower() in Pokemon.NATURE_DICTIONARY:
+            self.__nature=nature
+            nature_modifer= Pokemon.NATURE_DICTIONARY[nature.lower()]
+            self.__hp_modifer=float(nature_modifer[1])
+            self.__attack_modifer=float(nature_modifer[2])
+            self.__defense_modifer=float(nature_modifer[3])
+            self.__special_attack_modifer=float(nature_modifer[4])
+            self.__special_defense_modifer=float(nature_modifer[5])
+            self.__speed_modifer=float(nature_modifer[6])
+        else:
+            raise ValueError("This nature does not exists")
+
+    #iv
+    @property
+    def iv(self):
+        return self.__iv
+
+    @iv.setter
+    def iv(self,iv:list):
+        if len(iv) !=6:
+            raise ValueError('iv needs to be a list of six int')
+        if max(iv)>31 or min(iv)<0 or sum(type(i) != "int" for i in iv)>0:
+            raise ValueError('iv needs to be an int between 0 and 31!')
+        else:
+            self.__iv=iv
+            self.__iv_hp=self.__iv[0]
+            self.__iv_attack=self.__iv[1]
+            self.__iv_defense=self.__iv[2]
+            self.__iv_special_attack=self.__iv[3]
+            self.__iv_special_defense=self.__iv[4]
+            self.__iv_speed=self.__iv[5]
+
+    #ev
+    @property
+    def ev(self):
+        return self.__ev
+
+    @ev.setter
+    def ev(self,ev:list):
+        if len(ev) !=6:
+            raise ValueError('iv needs to be a list of six int')
+        if max(self.__ev)>252 or min(self.__ev)<0:
+            raise ValueError('ev needs to be an int bettwen 0 and 252')
+        if sum(self.__ev)>510:
+            raise ValueError('sum of evs need be to 510 or less!')
+        else:
+            self.__ev=ev
+            self.__ev_hp=self.__ev[0]
+            self.__ev_attack=self.__ev[1]
+            self.__ev_defense=self.__ev[2]
+            self.__ev_special_attack=self.__ev[3]
+            self.__ev_special_defense=self.__ev[4]
+            self.__ev_speed=self.__ev[5]
+
+
 
     def __str__(self):
         stats=self.get_initial_stats
@@ -166,7 +313,6 @@ class Pokemon(object):
         msg = '''
                     Pokemon: {} \n
                     Pokemon Index: {}\n
-                    Ability: {}
                     HP: {}\n
                     Attack: {}\n
                     Defense: {}\n
@@ -174,25 +320,37 @@ class Pokemon(object):
                     Special Defense: {}\n
                     Speed: {}\n
                     Nature: {}\n
+                    Ability:{}\n
                     Item: {}\n
 
-              '''.format(self.name,self.__id,self.ability,HP,ATK,DEF,SpATK,SpDef,Speed,self.nature,self.item)
+              '''.format(self.name,self.__id,HP,ATK,DEF,SpATK,SpDef,Speed,self.__nature,self.ability,self.item)
 
         return msg
 
-    #stats during the game, will change with the game; 战斗中六围数据
-    @property
-    def battle_stats(self):
-        battleHP = round((self.__hp*2+self.iv_hp+(self.ev_hp/4))*self.level/100+10+self.level)*self.__hp_modifer
-        battleATK = round(((self.__attack*2+self.iv_attack+(self.ev_attack/4))*self.level/100+5)*self.__attack_modifer)
-        battleDEF = round(((self.__defense*2+self.iv_defense+(self.ev_defense/4))*self.level/100+5)*self.__defense_modifer)
-        battleSpATK = round(((self.__special_attack*2+self.iv_special_attack+(self.ev_special_attack/4))*self.level/100+5)*self.__special_attack_modifer)
-        battleSpDEF = round(((self.__special_defense*2+self.iv_special_defense+(self.ev_special_defense/4))*self.level/100+5)*self.__special_defense_modifer)
-        battleSpeed = round(((self.__speed*2+self.iv_speed+(self.ev_speed/4))*self.level/100+5)*self.__speed_modifer)
-        return [battleHP,battleATK,battleDEF,battleSpATK,battleSpDEF,battleSpeed]
-    @battle_stats.setter
-    def battle_stats_change(self,change):
-        return change
+    #def get_health_bar(self):
+        if self.__is_dynamax:
+           num=self.in_battle_hp//10*(0.5+0.05*self.__dynamax_level)
+           len=self.initial_stats[0]//10*(0.5+0.05*self.dynamax_level)
+        else:
+           num=self.in_battle_hp//10
+           len=self.initial_stats[0]//10
+        bar="#"*int(num)+"-"*(int(len)-int(num))
+        return bar
+
+
+    #def myteam_format(self):
+        msg="""
+             {} {}\n
+             {}/{}  {}     {}
+            """.format(self.name,self.get_health_bar(),self.in_battle_hp,self.initial_stats[0],self.gender,self.item)
+        return msg
+
+    def opponent_team_format(self):
+        msg="""
+            {} {}   {}
+            """.format(self.name,self.get_health_bar(),self.gender)
+        return msg
+
 
     def get_current_status(self):
         '''
@@ -202,135 +360,74 @@ class Pokemon(object):
         msg = '''
                     Pokemon: {} \n
                     Pokemon Index: {}\n
-                    HP: {}\nAttack: {}\n
+                    HP: {}\n
+                    Attack: {}\n
                     Defense: {}\n
                     Special Offense:{}\n
                     Special Defense: {}\n
                     Speed: {}\n
-              '''.format(self.name,self.__id,self.battleHP,self.battleATK,self.battleDEF, \
-                         self.battleSpATK,self.battleSpDEF,self.battleSpeed)
+              '''.format(self.name,self.__id,self.__battle_stats[0],self.__battle_stats[1],self.__battle_stats[2],self.__battle_stats[3],self.__battle_stats[4],self.__battle_stats[5])
         print(msg)
         return
 
-    def get_iv(self):
-        ev_list={"hp":self.iv_hp,"attack":self.iv_attack,"defense":self.iv_defense,"special_attack": self.iv_special_attack,"special_defense":self.iv_special_defense,"speed":self.iv_speed}
+    @property
+    def move(self):
+        return self.__move1,self.__move2,self.__move3,self.__move4
 
-        msg='''
-                      Individual value: \n
-                      HP  Attack  Defense  SpAtk SpDef Speed\n
-                      {}   {}    {}     {}  {}   {} \n
-            '''.format(self.ev_hp,self.ev_attack,self.ev_defense,self.ev_special_attack,self.ev_special_defense,self.ev_speed)
-        print(msg)
-        return ev_list
+    @move.setter
+    def move(self,move,replace):
+        move_list=[self.__move1,self.move2,self.__move3,self.__move4]
+        move_list[replace]=move
+        self.__move1,self.move2,self.__move3,self.__move4=move_list
 
-    def get_ev(self):
-        ev_list={"hp":self.ev_hp,"attack":self.ev_attack,"defense":self.ev_defense,"special_attack": self.ev_special_attack,"special_defense":self.ev_special_defense,"speed":self.ev_speed}
+    @property
+    def hp(self):
+        return self.__battle_hp
 
-        msg='''
-                      Effort value: \n
-                      HP  Attack  Defense  SpAtk SpDef Speed\n
-                      {}   {}    {}     {}  {}   {} \n
-            '''.format(self.ev_hp,self.ev_attack,self.ev_defense,self.ev_special_attack,self.ev_special_defense,self.ev_speed)
-        print(msg)
-        return ev_list
+    @hp.setter
+    def take_damage(self,damage:int):
+        self.__battle_hp=max(0,self.__battle_hp-damage)
 
-    #change nature 设置性格
-    def set_nature(self,nature):
-        self.nature=nature
-        nature_modifer=Pokemon.NATURE_DICTIONARY[nature.lower()]
-        if nature_modifer is None:
-            raise ValueError('This nature does not exist!')
-        self.__hp_modifer=float(nature_modifer[1])
-        self.__attack_modifer=float(nature_modifer[2])
-        self.__defense_modifer=float(nature_modifer[3])
-        self.__special_attack_modifer=float(nature_modifer[4])
-        self.__special_defense_modifer=float(nature_modifer[5])
-        self.__speed_modifer=float(nature_modifer[6])
+    @hp.setter
+    def heal(self,heal:int):
+        if self.__is_dynamax==0:
+            self.__battle_hp=min(self.__initial_stats[0],self.__battle_hp+heal)
+        else:
+            self.__battle_hp=min(self.__initial_stats[0]*(0.5+0.05*self.__dynamax_level),self.__battle_hp+heal)
 
-    def set_friendship(self,friendship):
-        if friendship<0 or frienship>255:
-            raise ValueError("frienship needs to be an int between 0 and 255")
-        self.friendship=friendship
+    @property
+    def dynamax_level(self):
+        return self.__dynamax_level
 
-    def set_iv(self,iv_list):
-        if min(iv_list)<0 or max(iv_list)>31:
-            raise ValueError('iv needs to be an int between 0 and 31!')
-        self.iv_hp=iv_list[0]
-        self.iv_attack=iv_list[1]
-        self.iv_defense=iv_list[2]
-        self.iv_special_attack=iv_list[3]
-        self.iv_special_defense=iv_list[4]
-        self.iv_speed=iv_list[5]
+    @dynamax_level.setter
+    def dynamax_level(self,level):
+        return self.__dynamax_level=level
 
-    def set_ev(self,ev_list):
-        if sum(ev_list)>510:
-            raise ValueError('sum of evs need be to 510 or less!')
-        if min(ev_list)<0 or max(ev_list)>252:
-            raise ValueError('ev needs to be an int between 0 and 252!')
-        self.ev_hp=ev_list[0]
-        self.ev_attack=ev_list[1]
-        self.ev_defense=ev_list[2]
-        self.ev_special_attack=ev_list[3]
-        self.ev_special_defense=ev_list[4]
-        self.ev_speed=ev_list[5]
+    @property
+    def is_dynamax(self):
+        return self.__is_dynamax
 
-    # Set STAT STAGE Methods
-    def setAtkStage(self, atkStage):
-        self.atkStage = min(5,atkStage)
+    @is_dynamax.setter
+    def is_dynamax(self,dynamax):
+        self.__is_dynamax=dynamax
+        if dynamax==1:
 
-    def setDefStage(self, defStage):
-        self.defStage = min(5,defStage)
 
-    def setSpAtkStage(self, spAtkStage):
-        self.spAtkStage = min(5,spAtkStage)
 
-    def setSpDefStage(self, spDefStage):
-        self.spDefStage = min(5,spDefStage)
+    @property
+    def faint(self):
+        if self.__battle_hp<=0:
+            self.__is_faint=1
+            return 1
+        else:
+            return 0
 
-    def setSpeedStage(self, speedStage):
-        self.speedStage = min(5,speedStage)
 
-    # MOVE Methods
-    def getMove1(self):
-        return self.move1
 
-    def getMove2(self):
-        return self.move2
 
-    def getMove3(self):
-        return self.move3
 
-    def getMove4(self):
-        return self.move4
 
-    def setMove1(self, move1):
-        self.move1 = move1
 
-    def setMove2(self, move2):
-        self.move2 = move2
-
-    def setMove3(self, move3):
-        self.move3 = move3
-
-    def setMove4(self, move4):
-        self.move4 = move4
-
-    def set_ev(self,ev_list):
-        if sum(ev_list)>510:
-            raise ValueError('sum of evs need be to 510 or less!')
-        if min(ev_list)<0 or max(ev_list)>252:
-            raise ValueError('ev needs to be an int between 0 and 252!')
-        self.ev_hp=ev_list[0]
-        self.ev_attack=ev_list[1]
-        self.ev_defense=ev_list[2]
-        self.ev_special_attack=ev_list[3]
-        self.ev_special_defense=ev_list[4]
-        self.ev_speed=ev_list[5]
-    # Print Methods
-    # These methods return strings containing information about HP and movesets
-    def printHP(self):
-        msg = str(self.name) + ": HP " + str("{}/{}".format(self.battleHP,self.originalHP))
-        return msg
 
     #def printMoves(self): # Take a list of move names as argument?
     #    msg = "\nMove 1: " + self.move1.moveInfo[1] + "\nMove 2: " + self.move2.moveInfo[1] + "\nMove 3: " + self.move3.moveInfo[1] + "\nMove 4: " + self.move4.moveInfo[1]
