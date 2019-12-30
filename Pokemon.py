@@ -57,11 +57,16 @@ class Pokemon(object):
         self.__type1 = pokemonInfo[2]
         self.__type2 = pokemonInfo[3]
 
+        self.original_type=[self.__type1,self.__type2]
+
         # Move 技能
-        self.__move1=moves[0]
-        self.__move2=moves[1]
-        self.__move3=moves[2]
-        self.__move4=moves[3]
+        try:
+            self.__move1=moves[0]
+            self.__move2=moves[1]
+            self.__move3=moves[2]
+            self.__move4=moves[3]
+        except:
+            print("Please Specify the move of this pokemon!")
 
         # iv 个体值
         self.__iv=iv
@@ -141,7 +146,7 @@ class Pokemon(object):
         self.spAtkStage = 0
         self.spDefStage = 0
         self.speedStage = 0
-        self.acccuracy_level=self.__accuracy+self.__evasion
+        self.accuracy_level=self.__accuracy+self.__evasion
         self.__buff=[self.atkStage,self.defStage,self.spAtkStage,self.spDefStage,self.speedStage,self.accuracy_level]
 
         #dynamax 超极巨化
@@ -161,26 +166,30 @@ class Pokemon(object):
 
         self.__battle_hp=int(originalHP)
         self.__is_faint=0
+
+
+        #pokemon condtions
+        self.paralysis=0
+        self.toxic=0
+        self.poison=0
+        self.sleep=0
+        self.confuse=0
+        self.unmoveable=0
+        self.freeze=0
     # Property
 
 
     #read only property in battle stats: 六围面板数据
     @property
     def initial_stats(self):
+        originalHP = round((self.__hp*2+self.__iv_hp+(self.__ev_hp/4))*self.level/100+10+self.level)*self.__hp_modifer
+        originalATK = round(((self.__attack*2+self.__iv_attack+(self.__ev_attack/4))*self.level/100+5)*self.__attack_modifer)
+        originalDEF = round(((self.__defense*2+self.__iv_defense+(self.__ev_defense/4))*self.level/100+5)*self.__defense_modifer)
+        originalSpATK = round(((self.__special_attack*2+self.__iv_special_attack+(self.__ev_special_attack/4))*self.level/100+5)*self.__special_attack_modifer)
+        originalSpDEF = round(((self.__special_defense*2+self.__iv_special_defense+(self.__ev_special_defense/4))*self.level/100+5)*self.__special_defense_modifer)
+        originalSpeed = round(((self.__speed*2+self.__iv_speed+(self.__ev_speed/4))*self.level/100+5)*self.__speed_modifer)
+        self.__initial_stats=[int(originalHP),originalATK,originalDEF,originalSpATK,originalSpDEF,originalSpeed]
         return self.__initial_stats
-
-    @initial_stats.setter
-    def initial_stats(self,stats:list):
-        if len(stats) !=6:
-            raise ValueError('iv needs to be a list of six int')
-        else:
-            originalHP = round((self.__hp*2+self.__iv_hp+(self.__ev_hp/4))*self.level/100+10+self.level)*self.__hp_modifer
-            originalATK = round(((self.__attack*2+self.__iv_attack+(self.__ev_attack/4))*self.level/100+5)*self.__attack_modifer)
-            originalDEF = round(((self.__defense*2+self.__iv_defense+(self.__ev_defense/4))*self.level/100+5)*self.__defense_modifer)
-            originalSpATK = round(((self.__special_attack*2+self.__iv_special_attack+(self.__ev_special_attack/4))*self.level/100+5)*self.__special_attack_modifer)
-            originalSpDEF = round(((self.__special_defense*2+self.__iv_special_defense+(self.__ev_special_defense/4))*self.level/100+5)*self.__special_defense_modifer)
-            originalSpeed = round(((self.__speed*2+self.__iv_speed+(self.__ev_speed/4))*self.level/100+5)*self.__speed_modifer)
-            self.__initial_stats=[int(originalHP),originalATK,originalDEF,originalSpATK,originalSpDEF,originalSpeed]
 
 
     @property
@@ -199,7 +208,7 @@ class Pokemon(object):
             if i+j>=0:
                 return (min(i+j,6)+3)/3
             else:
-                retrun 3/(min(i+j,6)+3)
+                return 3/(min(i+j,6)+3)
 
         if len(stats_change) !=7:
            ValueError("Need to be a list of 7 int representing\n attack,defense,special attack,special defense,speed,accuracy,evasion")
@@ -226,7 +235,7 @@ class Pokemon(object):
 
     @property
     def battle_stats(self):
-        return self.__battles_stats
+        return self.__battle_stats
 
 
 
@@ -246,7 +255,7 @@ class Pokemon(object):
 
     @nature.setter
     def nature(self,nature):
-        if  nature.lower() in Pokemon.NATURE_DICTIONARY:
+        if  nature.lower() in Pokemon.NATURE_DICTIONARY.keys():
             self.__nature=nature
             nature_modifer= Pokemon.NATURE_DICTIONARY[nature.lower()]
             self.__hp_modifer=float(nature_modifer[1])
@@ -255,6 +264,7 @@ class Pokemon(object):
             self.__special_attack_modifer=float(nature_modifer[4])
             self.__special_defense_modifer=float(nature_modifer[5])
             self.__speed_modifer=float(nature_modifer[6])
+            self.initial_stats
         else:
             raise ValueError("This nature does not exists")
 
@@ -267,7 +277,7 @@ class Pokemon(object):
     def iv(self,iv:list):
         if len(iv) !=6:
             raise ValueError('iv needs to be a list of six int')
-        if max(iv)>31 or min(iv)<0 or sum(type(i) != "int" for i in iv)>0:
+        if max(iv)>31 or min(iv)<0 or sum(type(i) != int for i in iv)>0:
             raise ValueError('iv needs to be an int between 0 and 31!')
         else:
             self.__iv=iv
@@ -277,6 +287,7 @@ class Pokemon(object):
             self.__iv_special_attack=self.__iv[3]
             self.__iv_special_defense=self.__iv[4]
             self.__iv_speed=self.__iv[5]
+            self.initial_stats
 
     #ev
     @property
@@ -286,7 +297,7 @@ class Pokemon(object):
     @ev.setter
     def ev(self,ev:list):
         if len(ev) !=6:
-            raise ValueError('iv needs to be a list of six int')
+            raise ValueError('ev needs to be a list of six int')
         if max(self.__ev)>252 or min(self.__ev)<0:
             raise ValueError('ev needs to be an int bettwen 0 and 252')
         if sum(self.__ev)>510:
@@ -299,11 +310,12 @@ class Pokemon(object):
             self.__ev_special_attack=self.__ev[3]
             self.__ev_special_defense=self.__ev[4]
             self.__ev_speed=self.__ev[5]
+            self.initial_stats
 
 
 
     def __str__(self):
-        stats=self.get_initial_stats
+        stats=self.__initial_stats
         HP=stats[0]
         ATK=stats[1]
         DEF=stats[2]
@@ -401,7 +413,7 @@ class Pokemon(object):
 
     @dynamax_level.setter
     def dynamax_level(self,level):
-        return self.__dynamax_level=level
+        self.__dynamax_level=level
 
     @property
     def is_dynamax(self):
@@ -411,6 +423,7 @@ class Pokemon(object):
     def is_dynamax(self,dynamax):
         self.__is_dynamax=dynamax
         if dynamax==1:
+            self.__battle_hp=self.__battle_hp*2
 
 
 
@@ -421,6 +434,22 @@ class Pokemon(object):
             return 1
         else:
             return 0
+
+    @property
+    def has_condition(self):
+        return self.paralysis|self.toxic|self.sleep|self.freeze|self.poison
+
+    @property
+    def is_confused(self):
+        return self.confuse
+
+    @property
+    def is_unmoveable(self):
+        return self.is_unmoveable
+
+
+
+
 
 
 

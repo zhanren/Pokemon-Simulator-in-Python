@@ -2,16 +2,17 @@ import Pokemon
 import Move
 
 class ability(object):
-    def __init__(self,name:str,timing:str,description:str):
+    def __init__(self,name:str,timing:str,description:str,one_time_only=0):
         self.name=name
         self.timing=timing
+        self.one_time_only=one_time_only
         #timing:
         #when item effect would trigger:
         #sub in
         #sub out
         #dies
-        #before taking damage
-        #after taking damage
+        #before dealing damage
+        #after dealing damage
         #opponent sub in
         #opponent sub out
         #before taking damage
@@ -33,9 +34,9 @@ class ability(object):
         return self.id
 
     def get_name(self):
-        return self.name
+        return self.namess
 
-    def get.timing(self):
+    def get_timing(self):
         return self.timing
 
 
@@ -46,7 +47,24 @@ class FlashFire(ability):
         self.user=user
         self.target=target
 
-    def taking_effect(user,target):
-        if user.getType()=="Fire" and "Fire" in target.get_type():
-           damage=0
-           target.
+    @property
+    def taking_effect(user:Move,target:Pokemon):
+        if user.getType()=="Fire" and "Fire" in target.type:
+           user.damage=0
+           target.__battle_stats[1]*=1.5
+           target.__battle_stats[3]*=1.5
+
+
+class Disguise(ability):
+    def __init__(self,user:Move,target:Pokemon):
+        ability.__init__(name="Disguise",timing="after taking damage",
+                         description="Once per battle, the shroud that covers the Pokémon can protect it from an attack.",
+                         one_time_only=1)
+        self.user=user
+        self.target=target
+
+    def effect(user:Move,target:Pokemon):
+        if user.damage>0:
+            user.damage=0
+            target.__battle_hp-=round(target.__initial_stats[0]*1/8)
+            self.type=self.original_type
