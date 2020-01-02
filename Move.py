@@ -1,5 +1,5 @@
 class Move(object):
-    def __init__(self,id:int,name:str,power:int,description:str,accuracy:int,pp:int,type:str,category:str,move_priority=0):
+    def __init__(self,id:int,name:str,power:int,description:str,accuracy:int,pp:int,type:str,category:str,move_priority=0,has_contact=0,defendable=1):
         # ATTRIBUTES
         # ID info
         self.id = id # Move's number id
@@ -13,213 +13,22 @@ class Move(object):
         self.availablepp=pp
         self.max_pp=self.pp*1.6
         self.move_priority=move_priority
+        self.has_contact=has_contact
 
         self.power=power
         self.accuracy=accuracy
-
-
-        def __str__(self):
-            msg = """
-                     Move Name:{} \n
-                     Move Description:{} \n
-                     Move Type:{} \n
-                     Move category:{} \n
-                     Power:{} PP:{}/{} \n
-                  """.format(self.name,self.description,self.type,self.category,self.power,self.available,self.pp)
-            return msg
-
-
-        def getname(self):
-            return self.name
-        # GET Methods
-        def getID(self):
-            return self.id
-
-        def getDescription(self):
-            return self.description
-
-        def getType(self):
-            return self.type
-
-        def get_move_priority(self):
-            return self.priority
-
-        def getPower(self):
-            return self.power
-
-        def getAccuracy(self):
-            return self.accuracy
-
-        def getPP(self):
-            return self.pp
-
-class Physical_Move(Move):
-    def __init__(self,id:int,name:str,power:int,description:str,accuracy:int,pp:int,category:str,
-                 has_contact=0,recoil=0,move_priority=0,guardable=1,unmissible=0):
-        Move.__init__(self,id:int,name:str,power:int,description:str,accuracy:int,pp:int,category:str,move_priority=move_priority)
-        self.type='physical damage'
-        self.recoil=recoil
-        self.has_contact=has_contact
-        self.guardable=guardable
-        self.unmissible=unmissible
-
-
-class Special_Move(Move):
-    def __init__(self,id:int,name:str,power:int,description:str,accuracy:int,pp:int,category:str,
-                 has_contact=0,recoil=0,move_priority=0,guardable=1,unmissible=0):
-        Move.__init__(self,id:int,name:str,power:int,description:str,accuracy:int,pp:int,category:str,move_priority=move_priority)
-        self.type='special damage'
-        self.recoil=recoil
-        self.has_contact=has_contact
-        self.guardable=guardable
-        self.unmissible=unmissible
-
-class Weather_Move(Move):
-    def __init__(self,id:int,name:str,power:int,description:str,accuracy:int,pp:int,category:str,
-                 weather):
-        Move.__init__(self,id:int,name:str,power:int,description:str,accuracy:int,pp:int,category:str,move_priority=move_priority)
-        self.weather=weather
-
-
-
-
-class Move(object):
-    def __init__(self,id:int,name:str,power:int,description:str,accuracy:int,pp:int,type:str,category:str,has_contact:bool,
-                weather=None,status_change=None,stats_change=None,
-                defendable=True,critial_rate=1/24,move_priority=0,
-                unmissible=0):
-        # ATTRIBUTES
-        # ID info
-        self.id = id # Move's number id
-        self.name = name  # Move's name
-        self.description = description  # Move description
-
-        # Description
-        self.type = type  # Move type
-        self.category = category  # Can be special, physical,special,one-hit; can be multiple
-        self.pp = pp
-        self.availablepp=pp
-        self.max_pp=self.pp*1.6
-        self.has_contact=has_contact
         self.defendable=defendable
-        self.move_priority=move_priority
-
-        # For in-battle calculations
-        self.power = power  # Move's base damage
-        self.accuracy = accuracy
-        self.unmissible=unmissible
-        self.recoil={"self_health_percentage":0,"damage_percentage":0}
-
-        #status_change
-        self.cause_status_condition= \
-        {"Paralysis":{"self":0,"opponent":0}, \
-             "Toxic":{"self":0,"opponent":0}, \
-             "Sleep":{"self":0,"opponent":0},
-             "Confusion":{"self":0,"opponent":0},
-             "Freezed":{"self":0,"opponent":0},
-             "Burned":{"self":0,"opponent":0},
-             "Poisoned":{"self":0,"opponent":0},
-             "Flinch":{"self":0,"opponent":0},
-        }
-
-        if status_change is not None:
-            for status,change in status_change.items():
-                for target,percentage in change.items():
-                    self.cause_status_condition[status][target]=percentage
 
 
-        #stats_change
-        self.cause_stats_change= \
-        {
-        "Attack":{"self":0,"opponent":0},
-        "Defense":{"self":0,"opponent":0},
-        "SpAtk":{"self":0,"opponent":0},
-        "SpDef":{"self":0,"opponent":0},
-        "Speed":{"self":0,"opponent":0},
-        "Heal":{"self":0,"opponent":0},
-        "Self Damage":{"self":0,"opponent":0}
-        }
-
-        if stats_change is not None:
-            for status,change in stats_change.items():
-                for target,percentage in change.items():
-                    self.cause_stats_change[status][target]=percentage
-
-        #weather_change
-        self.change_weather= \
-        {
-        "Sunny":0,
-        "Rainy":0,
-        "Hail":0,
-        "Sand Storm":0
-        }
-
-        if weather is not None:
-            self.change_weather[weather]=1
-
-    # METHODS
-    # str method
     def __str__(self):
         msg = """
-                 Move Name:{} \n
-                 Move Description:{} \n
-                 Move Type:{} \n
-                 Move category:{} \n
-                 Power:{} PP:{}/{} \n
-              """.format(self.name,self.description,self.type,self.category,self.power,self.available,self.pp)
+                    Name:{} \n
+                    Description:{} \n
+                    Type:{} \n
+                    Category:{} \n
+                    Power:{} PP:{}/{} \n
+              """.format(self.name,self.description,self.type,self.category,self.power,self.availablepp,self.pp)
         return msg
-
-    def getname(self):
-        return self.name
-
-    # GET Methods
-    def getID(self):
-        return self.id
-
-    def getName(self):
-        return self.name
-
-    def getDescription(self):
-        return self.description
-
-    def getType(self):
-        return self.type
-
-    def getKind(self):
-        return self.kind
-
-    def getPower(self):
-        return self.power
-
-    def getAccuracy(self):
-        return self.accuracy
-
-    def getPP(self):
-        return self.pp
-
-    def getCategory(self):
-        return self.category
-
-    def has_contact(self):
-        return self.has_contact
-
-    def get_status_condition(self):
-        return self.cause_status_condition
-
-    def get_stats_change(self):
-        return self.cause_stats_change
-
-    def defendable(self):
-        return self.defendable
-
-    def change_available_pp(self,available_pp):
-        return self.availablepp
-
-
-
-def MegaPunch(Move):
-
-
 
 class MegaPunch(Move):
     def __init__(self):
@@ -231,9 +40,8 @@ class MegaPunch(Move):
                      category="Physical",
                      power=80,
                      accuracy=85,
-                     pp=20,
-                     has_contact=1,
-                     defendable=1)
+                     pp=20)
+
 class PayDay(Move):
     def __init__(self):
        Move.__init__(self,
@@ -245,8 +53,8 @@ class PayDay(Move):
                      power=40,
                      accuracy=100,
                      pp=20,
-                     has_contact=0,
                      defendable=1)
+
 class FirePunch(Move):
     def __init__(self):
        Move.__init__(self,
@@ -258,9 +66,9 @@ class FirePunch(Move):
                      power=75,
                      accuracy=100,
                      pp=15,
-                     has_contact=1,
-                     defendable=1,
-                     status_change={"Burned":{"opponent":0.1}})
+                     has_contact=1)
+       self.burn=0.1
+
 class IcePunch(Move):
     def __init__(self):
        Move.__init__(self,
@@ -272,9 +80,9 @@ class IcePunch(Move):
                      power=75,
                      accuracy=100,
                      pp=15,
-                     has_contact=1,
-                     defendable=1,
-                     status_change={"Freezed":{"opponent":0.1}})
+                     has_contact=1)
+       self.freeze=0.1
+
 class ThunderPunch(Move):
     def __init__(self):
        Move.__init__(self,
@@ -287,8 +95,10 @@ class ThunderPunch(Move):
                      accuracy=100,
                      pp=15,
                      has_contact=1,
-                     defendable=1,
-                     status_change={"Paralysis":{"opponent":0.1}})
+                     defendable=1)
+       self.paralysis=0.1
+
+
 #class Scratch
 class ViceGrip(Move):
     def __init__(self):
@@ -329,8 +139,8 @@ class SwordDance(Move):
                      accuracy=100,
                      pp=20,
                      has_contact=0,
-                     defendable=0,
-                     stats_change={"Attack":{"self":2}})
+                     defendable=0)
+       self.attack=2
 class Cut(Move):
     def __init__(self):
        Move.__init__(self,
@@ -451,9 +261,8 @@ class Stomp(Move):
                      power=65,
                      accuracy=100,
                      pp=20,
-                     has_contact=1,
-                     defendable=1,
-                     status_change={"Flinch":{"opponent":0.3}})
+                     has_contact=1)
+       self.flinch=0.3
        #self.power=power*2 if target.status='minimized'
        #self.unmissible=1 if target.status='minimized'
 
@@ -470,5 +279,4 @@ class DoubleKick(Move):
                      pp=30,
                      has_contact=1,
                      defendable=1)
-      self.same_turn_attack=2
       #more on this

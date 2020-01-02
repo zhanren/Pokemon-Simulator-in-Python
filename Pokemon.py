@@ -1,5 +1,6 @@
 # Creating the Pokemon Class
 class Pokemon(object):
+    import math
     POKEMON_DICTIONARY = {}
     NATURE_DICTIONARY={}
     LEVEL = 50
@@ -60,13 +61,7 @@ class Pokemon(object):
         self.original_type=[self.__type1,self.__type2]
 
         # Move 技能
-        try:
-            self.__move1=moves[0]
-            self.__move2=moves[1]
-            self.__move3=moves[2]
-            self.__move4=moves[3]
-        except:
-            print("Please Specify the move of this pokemon!")
+        self.__moves=moves
 
         # iv 个体值
         self.__iv=iv
@@ -121,10 +116,10 @@ class Pokemon(object):
         # Creating an info list for user-selected pokemon nature
 
         #ability 特性
-        self.ability=ability
+        self.__ability=ability
 
         #item 携带物品
-        self.item=item
+        self.__item=item
 
         # In Battle Stats
         # Stat = ((Base * 2 + IV + (EV/4)) * Level / 100 + 5) * Nmod
@@ -325,21 +320,24 @@ class Pokemon(object):
         msg = '''
                     Pokemon: {} \n
                     Pokemon Index: {}\n
-                    HP: {}\n
-                    Attack: {}\n
-                    Defense: {}\n
-                    Special Offense:{}\n
-                    Special Defense: {}\n
-                    Speed: {}\n
-                    Nature: {}\n
-                    Ability:{}\n
-                    Item: {}\n
+                    HP: {}       Attack: {}\n
+                    Defense: {}  Special Offense:{}\n
+                    Special Defense: {}   Speed: {}\n
+                    Nature: {}           Ability:{}\n
+                    Item: {}
 
+                    Move: \n
               '''.format(self.name,self.__id,HP,ATK,DEF,SpATK,SpDef,Speed,self.__nature,self.ability,self.item)
 
+        try:
+            for move in self.__moves:
+                    msg+='      {}   '.format(move.name)
+        except:
+            pass
         return msg
 
-    #def get_health_bar(self):
+
+    def get_health_bar(self):
         if self.__is_dynamax:
            num=self.in_battle_hp//10*(0.5+0.05*self.__dynamax_level)
            len=self.initial_stats[0]//10*(0.5+0.05*self.dynamax_level)
@@ -350,7 +348,7 @@ class Pokemon(object):
         return bar
 
 
-    #def myteam_format(self):
+    def myteam_format(self):
         msg="""
              {} {}\n
              {}/{}  {}     {}
@@ -383,14 +381,22 @@ class Pokemon(object):
         return
 
     @property
-    def move(self):
-        return self.__move1,self.__move2,self.__move3,self.__move4
+    def moves(self):
+        final_list=[]
+        for move in self.__moves:
+            final_list.append(move.name)
+        return final_list
 
-    @move.setter
-    def move(self,move,replace):
-        move_list=[self.__move1,self.move2,self.__move3,self.__move4]
-        move_list[replace]=move
-        self.__move1,self.move2,self.__move3,self.__move4=move_list
+
+    @moves.setter
+    def moves(self,moves):
+        self.__moves=moves
+
+    def replace_move(self,move,replace:int):
+        if replace<len(self.__moves) and len(self.__moves)<4:
+            self.__moves.append(move)
+        else:
+            self.__moves[replace-1]=move
 
     @property
     def hp(self):
@@ -425,7 +431,27 @@ class Pokemon(object):
         if dynamax==1:
             self.__battle_hp=self.__battle_hp*2
 
+    @property
+    def item(self):
+        try:
+            return self.__item.name
+        except:
+            return None
 
+    @item.setter
+    def item(self,item):
+        self.__item=item
+
+    @property
+    def ability(self):
+        try:
+            return self.__ability.name
+        except:
+            return None
+
+    @ability.setter
+    def ability(self,item):
+        self.__item=item
 
     @property
     def faint(self):
@@ -434,6 +460,8 @@ class Pokemon(object):
             return 1
         else:
             return 0
+
+
 
     @property
     def has_condition(self):
